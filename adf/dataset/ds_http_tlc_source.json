@@ -1,0 +1,27 @@
+{
+	"name": "ds_http_tlc_source",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_http_tlcdata",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"p_filename": {
+				"type": "string",
+				"defaultValue": "yellow_tripdata_2024-01.parquet"
+			}
+		},
+		"annotations": [],
+		"type": "Binary",
+		"typeProperties": {
+			"location": {
+				"type": "HttpServerLocation",
+				"relativeUrl": {
+					"value": "@dataset().p_filename",
+					"type": "Expression"
+				}
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

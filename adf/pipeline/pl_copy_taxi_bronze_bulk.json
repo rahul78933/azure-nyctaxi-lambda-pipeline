@@ -1,0 +1,108 @@
+{
+	"name": "pl_copy_taxi_bronze_bulk",
+	"properties": {
+		"activities": [
+			{
+				"name": "ForEach1",
+				"type": "ForEach",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@pipeline().parameters.p_month_list",
+						"type": "Expression"
+					},
+					"isSequential": true,
+					"activities": [
+						{
+							"name": "copy_taxi_file_to_bronze",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "BinarySource",
+									"storeSettings": {
+										"type": "HttpReadSettings",
+										"requestMethod": "GET"
+									},
+									"formatSettings": {
+										"type": "BinaryReadSettings"
+									}
+								},
+								"sink": {
+									"type": "BinarySink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									}
+								},
+								"enableStaging": false
+							},
+							"inputs": [
+								{
+									"referenceName": "ds_http_tlc_source",
+									"type": "DatasetReference",
+									"parameters": {
+										"p_filename": {
+											"value": "@concat('yellow_tripdata_', item(), '.parquet')",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "ds_adls_bronze_taxi",
+									"type": "DatasetReference",
+									"parameters": {
+										"p_year": {
+											"value": "@split(item(), '-')[0]",
+											"type": "Expression"
+										},
+										"p_month": {
+											"value": "@split(item(), '-')[1]",
+											"type": "Expression"
+										},
+										"p_filename": {
+											"value": "@concat('yellow_tripdata_', item(), '.parquet')",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"p_month_list": {
+				"type": "array",
+				"defaultValue": [
+					"2023-01",
+					"2023-02",
+					"2023-03",
+					"2023-04",
+					"2023-05",
+					"2023-06",
+					"2023-07",
+					"2023-08",
+					"2023-09",
+					"2023-10",
+					"2023-11",
+					"2023-12"
+				]
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2026-07-07T16:01:05Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

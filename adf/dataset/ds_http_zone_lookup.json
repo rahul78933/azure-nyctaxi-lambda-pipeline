@@ -1,0 +1,23 @@
+{
+	"name": "ds_http_zone_lookup",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_http_tlcdata_root",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "HttpServerLocation",
+				"relativeUrl": "misc/taxi_zone_lookup.csv"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

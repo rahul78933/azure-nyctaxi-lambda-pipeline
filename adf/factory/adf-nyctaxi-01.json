@@ -1,0 +1,15 @@
+{
+	"name": "adf-nyctaxi-01",
+	"properties": {
+		"trustModeClaimForMi": {
+			"value": "Disabled",
+			"editable": true
+		}
+	},
+	"location": "centralindia",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "fc5621ba-c7b5-412c-8f30-272653e69785",
+		"tenantId": "4518d85c-d021-467e-b3c4-2e81189d4656"
+	}
+}
