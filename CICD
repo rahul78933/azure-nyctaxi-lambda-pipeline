@@ -1,0 +1,52 @@
+# Example CI/CD workflow for Azure Data Factory (illustrative — not wired to live Azure resources in this project)
+#
+# Triggers on changes to /adf, validates and deploys pipeline/dataset/linked service
+# definitions to a target Data Factory using the ARM template Azure generates on the
+# adf_publish branch.
+#
+# Requires these GitHub repository secrets to be configured:
+#   AZURE_CREDENTIALS   - a Service Principal with Contributor on the target Data Factory
+#   RESOURCE_GROUP      - target resource group name
+#   DATA_FACTORY_NAME   - target Data Factory name
+
+name: Deploy ADF Pipelines
+
+on:
+  push:
+    branches: [adf_publish]
+    paths:
+      - 'adf/**'
+
+jobs:
+  validate-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Validate ARM template
+        run: |
+          az deployment group validate \
+            --resource-group ${{ secrets.RESOURCE_GROUP }} \
+            --template-file ./adf/ARMTemplateForFactory.json \
+            --parameters ./adf/ARMTemplateParametersForFactory.json
+
+      - name: Deploy to Data Factory
+        run: |
+          az deployment group create \
+            --resource-group ${{ secrets.RESOURCE_GROUP }} \
+            --template-file ./adf/ARMTemplateForFactory.json \
+            --parameters ./adf/ARMTemplateParametersForFactory.json \
+            --parameters factoryName=${{ secrets.DATA_FACTORY_NAME }}
+
+      - name: Post-deploy smoke check
+        run: |
+          az datafactory pipeline list \
+            --resource-group ${{ secrets.RESOURCE_GROUP }} \
+            --factory-name ${{ secrets.DATA_FACTORY_NAME }} \
+            --output table
