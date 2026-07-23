@@ -1,0 +1,108 @@
+<svg viewBox="0 0 1200 760" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#5b6b7c"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="760" fill="#ffffff"/>
+
+  <text x="600" y="36" text-anchor="middle" font-size="24" font-weight="700" fill="#1b2733">NYC Taxi Trip Analytics — Lambda Architecture on Azure</text>
+
+  <!-- Batch layer container -->
+  <rect x="40" y="70" width="560" height="330" rx="10" fill="#eaf2fb" stroke="#3a7bd5" stroke-width="1.5"/>
+  <text x="60" y="98" font-size="16" font-weight="700" fill="#1b4f91">BATCH LAYER</text>
+
+  <!-- Source -->
+  <rect x="60" y="115" width="220" height="55" rx="6" fill="#ffffff" stroke="#3a7bd5" stroke-width="1.3"/>
+  <text x="170" y="138" text-anchor="middle" font-size="13" font-weight="600" fill="#1b2733">NYC TLC Parquet Files</text>
+  <text x="170" y="155" text-anchor="middle" font-size="11" fill="#5b6b7c">12 months, ~41M rows</text>
+
+  <!-- ADF -->
+  <rect x="60" y="190" width="220" height="55" rx="6" fill="#ffffff" stroke="#3a7bd5" stroke-width="1.3"/>
+  <text x="170" y="213" text-anchor="middle" font-size="13" font-weight="600" fill="#1b2733">Azure Data Factory</text>
+  <text x="170" y="230" text-anchor="middle" font-size="11" fill="#5b6b7c">Parameterized ForEach bulk copy</text>
+
+  <!-- ADLS bronze/silver/gold -->
+  <rect x="60" y="265" width="220" height="110" rx="6" fill="#ffffff" stroke="#3a7bd5" stroke-width="1.3"/>
+  <text x="170" y="285" text-anchor="middle" font-size="13" font-weight="600" fill="#1b2733">ADLS Gen2</text>
+  <text x="170" y="303" text-anchor="middle" font-size="11" fill="#5b6b7c">Bronze (raw)</text>
+  <text x="170" y="320" text-anchor="middle" font-size="11" fill="#5b6b7c">Silver (cleaned Delta, ~35.6M rows)</text>
+  <text x="170" y="337" text-anchor="middle" font-size="11" fill="#5b6b7c">Gold (4 aggregated Delta tables)</text>
+  <text x="170" y="354" text-anchor="middle" font-size="10" fill="#7a8a99">via Databricks / PySpark</text>
+
+  <!-- Databricks -->
+  <rect x="320" y="190" width="240" height="185" rx="6" fill="#fff3e6" stroke="#d97b29" stroke-width="1.3"/>
+  <text x="440" y="213" text-anchor="middle" font-size="13" font-weight="600" fill="#1b2733">Azure Databricks</text>
+  <text x="440" y="231" text-anchor="middle" font-size="11" fill="#5b6b7c">Schema reconciliation</text>
+  <text x="440" y="248" text-anchor="middle" font-size="11" fill="#5b6b7c">Data quality rules</text>
+  <text x="440" y="265" text-anchor="middle" font-size="11" fill="#5b6b7c">Zone dimension join</text>
+  <text x="440" y="282" text-anchor="middle" font-size="11" fill="#5b6b7c">Gold aggregations</text>
+  <text x="440" y="304" text-anchor="middle" font-size="10" fill="#7a8a99">Auth: Service Principal (OAuth)</text>
+  <text x="440" y="320" text-anchor="middle" font-size="10" fill="#7a8a99">Secrets: Databricks Secret Scope</text>
+  <text x="440" y="336" text-anchor="middle" font-size="10" fill="#7a8a99">Least-privilege: Storage Blob Data Contributor</text>
+
+  <!-- arrows batch -->
+  <line x1="170" y1="170" x2="170" y2="190" stroke="#5b6b7c" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="170" y1="245" x2="170" y2="265" stroke="#5b6b7c" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="280" y1="245" x2="320" y2="245" stroke="#5b6b7c" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="320" y1="300" x2="280" y2="320" stroke="#5b6b7c" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Streaming layer container -->
+  <rect x="40" y="420" width="560" height="230" rx="10" fill="#fdeeee" stroke="#c0392b" stroke-width="1.5"/>
+  <text x="60" y="448" font-size="16" font-weight="700" fill="#8f271d">STREAMING LAYER</text>
+
+  <rect x="60" y="465" width="220" height="55" rx="6" fill="#ffffff" stroke="#c0392b" stroke-width="1.3"/>
+  <text x="170" y="488" text-anchor="middle" font-size="13" font-weight="600" fill="#1b2733">Simulated Trip Events</text>
+  <text x="170" y="505" text-anchor="middle" font-size="11" fill="#5b6b7c">Python generator (Databricks notebook)</text>
+
+  <rect x="60" y="540" width="220" height="55" rx="6" fill="#ffffff" stroke="#c0392b" stroke-width="1.3"/>
+  <text x="170" y="563" text-anchor="middle" font-size="13" font-weight="600" fill="#1b2733">ADLS "landing" folder</text>
+  <text x="170" y="580" text-anchor="middle" font-size="11" fill="#5b6b7c">One JSON file per event</text>
+
+  <rect x="320" y="465" width="240" height="130" rx="6" fill="#ffffff" stroke="#c0392b" stroke-width="1.3"/>
+  <text x="440" y="488" text-anchor="middle" font-size="13" font-weight="600" fill="#1b2733">Spark Structured Streaming</text>
+  <text x="440" y="506" text-anchor="middle" font-size="11" fill="#5b6b7c">readStream (file source)</text>
+  <text x="440" y="523" text-anchor="middle" font-size="11" fill="#5b6b7c">1-min tumbling window + watermark</text>
+  <text x="440" y="540" text-anchor="middle" font-size="11" fill="#5b6b7c">30-sec micro-batch trigger</text>
+  <text x="440" y="562" text-anchor="middle" font-size="10" fill="#7a8a99">Checkpointed → Delta output</text>
+  <text x="440" y="578" text-anchor="middle" font-size="9" fill="#9aa7b3" font-style="italic">(pivoted from Event Hubs / Stream Analytics)</text>
+
+  <line x1="170" y1="520" x2="170" y2="540" stroke="#5b6b7c" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="280" y1="567" x2="320" y2="530" stroke="#5b6b7c" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Serving layer -->
+  <rect x="660" y="190" width="500" height="140" rx="10" fill="#eafaf1" stroke="#27ae60" stroke-width="1.5"/>
+  <text x="680" y="218" font-size="16" font-weight="700" fill="#1e7e42">SERVING LAYER</text>
+  <rect x="680" y="235" width="460" height="75" rx="6" fill="#ffffff" stroke="#27ae60" stroke-width="1.3"/>
+  <text x="910" y="258" text-anchor="middle" font-size="13" font-weight="600" fill="#1b2733">Azure Synapse Analytics — Serverless SQL Pool</text>
+  <text x="910" y="276" text-anchor="middle" font-size="11" fill="#5b6b7c">OPENROWSET views over Delta files (no data movement)</text>
+  <text x="910" y="293" text-anchor="middle" font-size="10" fill="#7a8a99">Auth: External Data Source + Managed Identity credential</text>
+
+  <!-- Visualization layer -->
+  <rect x="660" y="360" width="500" height="120" rx="10" fill="#f3ecfb" stroke="#8e44ad" stroke-width="1.5"/>
+  <text x="680" y="388" font-size="16" font-weight="700" fill="#5b2a72">VISUALIZATION</text>
+  <rect x="680" y="405" width="460" height="55" rx="6" fill="#ffffff" stroke="#8e44ad" stroke-width="1.3"/>
+  <text x="910" y="428" text-anchor="middle" font-size="13" font-weight="600" fill="#1b2733">Power BI Desktop</text>
+  <text x="910" y="446" text-anchor="middle" font-size="11" fill="#5b6b7c">Live import connection via Synapse SQL endpoint</text>
+
+  <!-- Connect gold + streaming to Synapse -->
+  <line x1="600" y1="310" x2="660" y2="260" stroke="#5b6b7c" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="600" y1="560" x2="660" y2="270" stroke="#5b6b7c" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="910" y1="310" x2="910" y2="405" stroke="#5b6b7c" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Version control -->
+  <rect x="660" y="500" width="500" height="150" rx="10" fill="#f4f4f4" stroke="#7a8a99" stroke-width="1.5"/>
+  <text x="680" y="528" font-size="16" font-weight="700" fill="#3a4652">VERSION CONTROL</text>
+  <rect x="680" y="545" width="220" height="80" rx="6" fill="#ffffff" stroke="#7a8a99" stroke-width="1.3"/>
+  <text x="790" y="570" text-anchor="middle" font-size="12" font-weight="600" fill="#1b2733">ADF Git Integration</text>
+  <text x="790" y="588" text-anchor="middle" font-size="10" fill="#5b6b7c">Pipelines/datasets as JSON</text>
+  <text x="790" y="604" text-anchor="middle" font-size="10" fill="#5b6b7c">/adf → main branch</text>
+
+  <rect x="920" y="545" width="220" height="80" rx="6" fill="#ffffff" stroke="#7a8a99" stroke-width="1.3"/>
+  <text x="1030" y="570" text-anchor="middle" font-size="12" font-weight="600" fill="#1b2733">Databricks Repos</text>
+  <text x="1030" y="588" text-anchor="middle" font-size="10" fill="#5b6b7c">Notebooks, documented</text>
+  <text x="1030" y="604" text-anchor="middle" font-size="10" fill="#5b6b7c">/databricks → main branch</text>
+
+  <text x="910" y="700" text-anchor="middle" font-size="11" fill="#9aa7b3">Both pushed to a single GitHub repository: azure-nyctaxi-lambda-pipeline</text>
+</svg>
