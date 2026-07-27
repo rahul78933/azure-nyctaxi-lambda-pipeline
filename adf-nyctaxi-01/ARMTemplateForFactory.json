@@ -1,0 +1,580 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "adf-nyctaxi-01"
+		},
+		"ls_adls_nyctaxi_accountKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accountKey' of 'ls_adls_nyctaxi'"
+		},
+		"ls_databricks_nyctaxi_accessToken": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accessToken' of 'ls_databricks_nyctaxi'"
+		},
+		"ls_adls_nyctaxi_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://stnyctaxiraj01.dfs.core.windows.net/"
+		},
+		"ls_http_tlcdata_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://d37ci6vzurychx.cloudfront.net/trip-data/"
+		},
+		"ls_http_tlcdata_root_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://d37ci6vzurychx.cloudfront.net/"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_copy_taxi_bronze')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "copy_taxi_file_to_bronze",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "BinarySource",
+								"storeSettings": {
+									"type": "HttpReadSettings",
+									"requestMethod": "GET"
+								},
+								"formatSettings": {
+									"type": "BinaryReadSettings"
+								}
+							},
+							"sink": {
+								"type": "BinarySink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "ds_http_tlc_source",
+								"type": "DatasetReference",
+								"parameters": {
+									"p_filename": {
+										"value": "@pipeline().parameters.p_filename",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "ds_adls_bronze_taxi",
+								"type": "DatasetReference",
+								"parameters": {
+									"p_year": {
+										"value": "@pipeline().parameters.p_year",
+										"type": "Expression"
+									},
+									"p_month": {
+										"value": "@pipeline().parameters.p_month\n",
+										"type": "Expression"
+									},
+									"p_filename": {
+										"value": "@pipeline().parameters.p_filename",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"p_year": {
+						"type": "string",
+						"defaultValue": "2024"
+					},
+					"p_month": {
+						"type": "string",
+						"defaultValue": "01"
+					},
+					"p_filename": {
+						"type": "string",
+						"defaultValue": "yellow_tripdata_2024-01.parquet"
+					}
+				},
+				"annotations": [],
+				"lastPublishTime": "2026-07-06T17:35:46Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_http_tlc_source')]",
+				"[concat(variables('factoryId'), '/datasets/ds_adls_bronze_taxi')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_copy_taxi_bronze_bulk')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "ForEach1",
+						"type": "ForEach",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@pipeline().parameters.p_month_list",
+								"type": "Expression"
+							},
+							"isSequential": true,
+							"activities": [
+								{
+									"name": "copy_taxi_file_to_bronze",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "BinarySource",
+											"storeSettings": {
+												"type": "HttpReadSettings",
+												"requestMethod": "GET"
+											},
+											"formatSettings": {
+												"type": "BinaryReadSettings"
+											}
+										},
+										"sink": {
+											"type": "BinarySink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											}
+										},
+										"enableStaging": false
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_http_tlc_source",
+											"type": "DatasetReference",
+											"parameters": {
+												"p_filename": {
+													"value": "@concat('yellow_tripdata_', item(), '.parquet')",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "ds_adls_bronze_taxi",
+											"type": "DatasetReference",
+											"parameters": {
+												"p_year": {
+													"value": "@split(item(), '-')[0]",
+													"type": "Expression"
+												},
+												"p_month": {
+													"value": "@split(item(), '-')[1]",
+													"type": "Expression"
+												},
+												"p_filename": {
+													"value": "@concat('yellow_tripdata_', item(), '.parquet')",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								}
+							]
+						}
+					},
+					{
+						"name": "run_bronze_to_silver",
+						"type": "DatabricksNotebook",
+						"dependsOn": [
+							{
+								"activity": "ForEach1",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebookPath": "/Workspace/Users/babbururahulraj35@gmail.com/azure-nyctaxi-lambda-pipeline/databricks/02_bronze_to_silver_transform"
+						},
+						"linkedServiceName": {
+							"referenceName": "ls_databricks_nyctaxi",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "run_silver_to_gold",
+						"type": "DatabricksNotebook",
+						"dependsOn": [
+							{
+								"activity": "run_bronze_to_silver",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebookPath": "/Workspace/Users/babbururahulraj35@gmail.com/azure-nyctaxi-lambda-pipeline/databricks/03_silver_to_gold_aggregations"
+						},
+						"linkedServiceName": {
+							"referenceName": "ls_databricks_nyctaxi",
+							"type": "LinkedServiceReference"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"p_month_list": {
+						"type": "array",
+						"defaultValue": [
+							"2023-01",
+							"2023-02",
+							"2023-03",
+							"2023-04",
+							"2023-05",
+							"2023-06",
+							"2023-07",
+							"2023-08",
+							"2023-09",
+							"2023-10",
+							"2023-11",
+							"2023-12"
+						]
+					}
+				},
+				"annotations": [],
+				"lastPublishTime": "2026-07-07T16:01:05Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_databricks_nyctaxi')]",
+				"[concat(variables('factoryId'), '/datasets/ds_http_tlc_source')]",
+				"[concat(variables('factoryId'), '/datasets/ds_adls_bronze_taxi')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_copy_zone_lookup')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy data1",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "HttpReadSettings",
+									"requestMethod": "GET"
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"sink": {
+								"type": "DelimitedTextSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "DelimitedTextWriteSettings",
+									"quoteAllText": true,
+									"fileExtension": ".txt"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "ds_http_zone_lookup",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "ds_adls_bronze_zones",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2026-07-07T16:35:00Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_http_zone_lookup')]",
+				"[concat(variables('factoryId'), '/datasets/ds_adls_bronze_zones')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_adls_bronze_taxi')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_adls_nyctaxi",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"p_year": {
+						"type": "string"
+					},
+					"p_month": {
+						"type": "string"
+					},
+					"p_filename": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@{dataset().p_filename}",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "taxi/year=@{dataset().p_year}/month=@{dataset().p_month}",
+							"type": "Expression"
+						},
+						"fileSystem": "bronze"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_adls_nyctaxi')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_adls_bronze_zones')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_adls_nyctaxi",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "taxi_zone_lookup.csv",
+						"folderPath": "zones",
+						"fileSystem": "bronze"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_adls_nyctaxi')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_http_tlc_source')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_http_tlcdata",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"p_filename": {
+						"type": "string",
+						"defaultValue": "yellow_tripdata_2024-01.parquet"
+					}
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "HttpServerLocation",
+						"relativeUrl": {
+							"value": "@dataset().p_filename",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_http_tlcdata')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_http_zone_lookup')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_http_tlcdata_root",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "HttpServerLocation",
+						"relativeUrl": "misc/taxi_zone_lookup.csv"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_http_tlcdata_root')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ls_adls_nyctaxi')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('ls_adls_nyctaxi_properties_typeProperties_url')]",
+					"accountKey": {
+						"type": "SecureString",
+						"value": "[parameters('ls_adls_nyctaxi_accountKey')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ls_databricks_nyctaxi')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureDatabricks",
+				"typeProperties": {
+					"domain": "https://adb-7405613896123362.2.azuredatabricks.net",
+					"accessToken": {
+						"type": "SecureString",
+						"value": "[parameters('ls_databricks_nyctaxi_accessToken')]"
+					},
+					"newClusterNodeType": "Standard_D4ds_v5",
+					"newClusterNumOfWorker": "1",
+					"newClusterSparkEnvVars": {
+						"PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+					},
+					"newClusterVersion": "17.3.x-scala2.13",
+					"clusterOption": "Fixed",
+					"newClusterInitScripts": []
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ls_http_tlcdata')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "HttpServer",
+				"typeProperties": {
+					"url": "[parameters('ls_http_tlcdata_properties_typeProperties_url')]",
+					"enableServerCertificateValidation": true,
+					"authenticationType": "Anonymous"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ls_http_tlcdata_root')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "HttpServer",
+				"typeProperties": {
+					"url": "[parameters('ls_http_tlcdata_root_properties_typeProperties_url')]",
+					"enableServerCertificateValidation": true,
+					"authenticationType": "Anonymous"
+				}
+			},
+			"dependsOn": []
+		}
+	]
+}

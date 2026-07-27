@@ -1,0 +1,30 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "adf-nyctaxi-01"
+		},
+		"ls_adls_nyctaxi_accountKey": {
+			"value": ""
+		},
+		"ls_databricks_nyctaxi_accessToken": {
+			"value": ""
+		},
+		"ls_adls_nyctaxi_properties_typeProperties_url": {
+			"value": "https://stnyctaxiraj01.dfs.core.windows.net/"
+		},
+		"ls_http_tlcdata_properties_typeProperties_url": {
+			"value": "https://d37ci6vzurychx.cloudfront.net/trip-data/"
+		},
+		"ls_http_tlcdata_root_properties_typeProperties_url": {
+			"value": "https://d37ci6vzurychx.cloudfront.net/"
+		},
+		"containerUri": {
+			"value": ""
+		},
+		"containerSasToken": {
+			"value": ""
+		}
+	}
+}
